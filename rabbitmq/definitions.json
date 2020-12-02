@@ -1,0 +1,39 @@
+{
+    "users": [
+        {
+            "name": "mirero",
+            "password_hash": "VvcotYplVn7YARf5I5kf3hD7fFCb+VrqxClNJWTNWzamXb3D+VJ7XMDd7Ge9FQ6yH+SzfHvgz7CKJRGZowF137yX5Lg=",
+            "hashing_algorithm": "rabbit_password_hashing_sha512",
+            "tags": "administrator"
+        }
+    ],
+    "vhosts": [
+        {
+          "name": "/"
+        },
+        {
+          "name": "/rabbitmq"
+        }
+    ],
+    "permissions": [
+        {
+          "user": "mirero",
+          "vhost": "/",
+          "configure": ".*",
+          "write": ".*",
+          "read": ".*"
+        },
+        {
+          "user": "mirero",
+          "vhost": "/rabbitmq",
+          "configure": ".*",
+          "write": ".*",
+          "read": ".*"
+        }
+    ],
+    "parameters": [],
+    "policies": [],
+    "queues": [],
+    "exchanges": [],
+    "bindings": []
+}
