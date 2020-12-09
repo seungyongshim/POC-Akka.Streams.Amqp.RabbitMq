@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Akka.Actor;
+using Akka.Configuration;
 using Akka.Streams.Amqp.RabbitMq;
 using Messages;
 
@@ -11,13 +12,28 @@ namespace ConsoleAppSimplePub
     {
         private static async Task Main(string[] args)
         {
-            var actorSystem = ActorSystem.Create("consoleSample");
+            var config = ConfigurationFactory.ParseString(@"
+akka {  
+    stdout-loglevel = DEBUG
+    loglevel = DEBUG
+    log-config-on-start = on        
+    actor {                
+        debug {  
+              receive = on 
+              autoreceive = on
+              lifecycle = on
+              event-stream = on
+              unhandled = on
+        }
+}");
+
+            var actorSystem = ActorSystem.Create("consoleSample", config);
 
             var pubActor = actorSystem.ActorOf(Props.Create<PubActor>(), nameof(PubActor));
 
             pubActor.Tell(new PubActor.Setup
             (
-                "Mirero.MLS.Api",
+                "Mirero.MLS.Api.Queue.Hello",
                 new List<(string Host, int Port)>
                 {
                     ("localhost", 1234),

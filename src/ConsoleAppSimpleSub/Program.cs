@@ -17,7 +17,7 @@ namespace ConsoleAppSimpleSub
 
             subActor.Tell(new SubActor.Setup
             (
-                "Mirero.MLS.Api",
+                "Mirero.MLS.Api.Queue.Hello.Ask",
                 new List<(string Host, int Port)>
                 {
                     ("localhost", 1234),
@@ -26,7 +26,6 @@ namespace ConsoleAppSimpleSub
                 "mirero",
                 "system",
                 consoleActor
-
             ));
 
             Console.ReadLine();

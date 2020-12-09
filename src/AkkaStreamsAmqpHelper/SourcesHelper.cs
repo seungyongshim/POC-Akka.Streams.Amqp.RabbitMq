@@ -27,7 +27,8 @@ namespace AkkaStreamsAmqpHelper
                                                           .WithHostsAndPorts(option.HostAndPorts.First(), option.HostAndPorts.ToArray())
                                                           .WithCredentials(AmqpCredentials.Create(option.UserName, option.Password))
                                                           .WithAutomaticRecoveryEnabled(true)
-                                                          .WithNetworkRecoveryInterval(TimeSpan.FromSeconds(1));
+                                                          .WithNetworkRecoveryInterval(TimeSpan.FromSeconds(1))
+                                                          .WithVirtualHost(option.VirtualHost);
 
             var queueDeclaration = QueueDeclaration.Create(option.QueueName)
                                                    .WithDurable(false)
@@ -43,6 +44,7 @@ namespace AkkaStreamsAmqpHelper
         public List<(string Host, int Port)> HostAndPorts { get; set; } = new List<(string, int)>();
         public string UserName { get; set; }
         public string Password { get; set; }
+        public string VirtualHost { get; set; }
     }
 
     public class SimpleQueueOptions : CommonOptions

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Streams.Amqp.RabbitMq;
@@ -8,30 +9,29 @@ namespace ConsoleAppSimpleRpc
 {
     class Program
     {
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
             var actorSystem = ActorSystem.Create("consoleSample");
 
-            var pubActor = actorSystem.ActorOf(Props.Create<RpcActor>(), nameof(RpcActor));
+            var rpcActor = actorSystem.ActorOf(Props.Create<RpcActor>(), nameof(RpcActor));
 
-            pubActor.Tell(new RpcActor.Setup
+            rpcActor.Tell(new RpcActor.Setup
             (
-                AmqpConnectionDetails.Create("localhost", 5672)
-                                     .WithCredentials(AmqpCredentials.Create("mirero", "system"))
-                                     .WithAutomaticRecoveryEnabled(true)
-                                     .WithNetworkRecoveryInterval(TimeSpan.FromSeconds(1)),
-                "Test1111",
-
-                QueueDeclaration.Create("Test1111")
-                                .WithDurable(false)
-                                .WithAutoDelete(false)
+                "Mirero.MLS.Api.Queue.Hello.Ask",
+                new List<(string, int)>
+                {
+                    ("localhost", 1234),
+                    ("localhost", 5672),
+                },
+                "mirero",
+                "system"
             ));
 
-            pubActor.Tell(new Hello());
+            var ret = await rpcActor.Ask<World>(new Hello("Hong"));
 
             await Task.Delay(5000);
-
             await actorSystem.Terminate();
+
         }
     }
 }

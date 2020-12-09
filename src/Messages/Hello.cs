@@ -8,6 +8,6 @@ namespace Messages
 
         public string Name { get;}
 
-        public override string ToString() => Name;
+        public override string ToString() => "Hello " + Name;
     }
 }

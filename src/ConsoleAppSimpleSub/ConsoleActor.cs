@@ -18,7 +18,7 @@ namespace ConsoleAppSimpleSub
                 Console.WriteLine(x.Message.ToString());
 
                 await Task.Delay(TimeSpan.FromSeconds(30));
-                await x.Commit.Ack();
+                await x.Commit.Nack();
             });
         }
     }

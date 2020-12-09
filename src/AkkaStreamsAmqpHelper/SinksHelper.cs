@@ -29,7 +29,8 @@ namespace AkkaStreamsAmqpHelper
                                                           .WithHostsAndPorts(option.HostAndPorts.First(), option.HostAndPorts.ToArray())
                                                           .WithCredentials(AmqpCredentials.Create(option.UserName, option.Password))
                                                           .WithAutomaticRecoveryEnabled(true)
-                                                          .WithNetworkRecoveryInterval(TimeSpan.FromSeconds(1));
+                                                          .WithNetworkRecoveryInterval(TimeSpan.FromSeconds(1))
+                                                          .WithVirtualHost(option.VirtualHost ?? "/");
 
             var queueDeclaration = QueueDeclaration.Create(option.QueueName)
                                                    .WithDurable(false)
@@ -38,18 +39,6 @@ namespace AkkaStreamsAmqpHelper
             return AmqpSink.CreateSimple(AmqpSinkSettings.Create(connectionSettings)
                                                          .WithRoutingKey(option.QueueName)
                                                          .WithDeclarations(queueDeclaration));
-        }
-
-        public class CommonOptions
-        {
-            public List<(string Host, int Port)> HostAndPorts { get; set; } = new List<(string, int)>();
-            public string UserName { get; set; }
-            public string Password { get; set; }
-        }
-
-        public class SimpleQueueOptions : CommonOptions
-        {
-            public string QueueName { get; set; }
         }
     }
 }

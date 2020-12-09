@@ -1,15 +1,11 @@
-using System;
 using System.Collections.Generic;
 using Akka.Actor;
 using Akka.Event;
 using Akka.IO;
 using Akka.Streams;
-using Akka.Streams.Amqp.RabbitMq;
-using Akka.Streams.Amqp.RabbitMq.Dsl;
 using Akka.Streams.Dsl;
 using Akka.Util;
 using AkkaStreamsAmqpHelper;
-using Newtonsoft.Json;
 
 namespace ConsoleAppSimplePub
 {
@@ -43,6 +39,7 @@ namespace ConsoleAppSimplePub
                     option.UserName = m.UserName;
                     option.Password = m.Password;
                     option.QueueName = m.QueueName;
+                    option.VirtualHost = m.VirtualHost;
                 }));
 
                 var flow = builder.Add(FlowsHelper.Serialize()
@@ -77,9 +74,10 @@ namespace ConsoleAppSimplePub
             }
 
             public string QueueName { get; }
-            public List<(string Host, int Port)> HostAndPorts { get; internal set; }
-            public string UserName { get; internal set; }
-            public string Password { get; internal set; }
+            public List<(string Host, int Port)> HostAndPorts { get; }
+            public string UserName { get; }
+            public string Password { get; }
+            public string VirtualHost { get; } = "/rabbitmq";
         }
     }
 }

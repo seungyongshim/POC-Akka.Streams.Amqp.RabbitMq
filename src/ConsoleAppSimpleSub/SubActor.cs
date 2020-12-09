@@ -4,6 +4,7 @@ using Akka.Event;
 using Akka.Streams;
 using Akka.Streams.Dsl;
 using AkkaStreamsAmqpHelper;
+using AkkaStreamsAmqpHelper.AbstractMessages;
 using Messages;
 
 namespace ConsoleAppSimpleSub
@@ -34,6 +35,7 @@ namespace ConsoleAppSimpleSub
                 option.QueueName = m.QueueName;
                 option.UserName = m.UserName;
                 option.Password = m.Password;
+                option.VirtualHost = m.VirtualHost;
             });
 
             var sinkActor = Sink.ActorRef<(object, ICommitable)>(Self, new CopmleteMessage());
@@ -67,7 +69,7 @@ namespace ConsoleAppSimpleSub
             }
         }
 
-        public class Setup
+        public class Setup : AbstractSetup
         {
             public Setup(string queueName,
                          List<(string Host, int Port)> hostAndPorts,
@@ -81,11 +83,7 @@ namespace ConsoleAppSimpleSub
                 Password = password;
                 ConsoleActor = consoleActor;
             }
-
-            public List<(string Host, int Port)> HostAndPorts { get; internal set; }
-            public string QueueName { get; internal set; }
-            public string UserName { get; internal set; }
-            public string Password { get; internal set; }
+            
             public IActorRef ConsoleActor { get; }
         }
 
