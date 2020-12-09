@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Akka.Actor;
 using Akka.Streams.Amqp.RabbitMq;
 
@@ -10,19 +11,22 @@ namespace ConsoleAppSimpleSub
         {
             var actorSystem = ActorSystem.Create("consoleSample");
 
-            var pubActor = actorSystem.ActorOf(Props.Create<SubActor>(), nameof(SubActor));
+            var subActor = actorSystem.ActorOf(Props.Create<SubActor>(), nameof(SubActor));
 
-            pubActor.Tell(new SubActor.Setup
+            var consoleActor = actorSystem.ActorOf(Props.Create<ConsoleActor>(), nameof(ConsoleActor));
+
+            subActor.Tell(new SubActor.Setup
             (
-                ConnectionSettings: AmqpConnectionDetails.Create("localhost", 5672)
-                                                          .WithCredentials(AmqpCredentials.Create("mirero", "system"))
-                                                          .WithAutomaticRecoveryEnabled(true)
-                                                          .WithNetworkRecoveryInterval(TimeSpan.FromSeconds(1)),
-                QueueName: "Test1111",
+                "Mirero.MLS.Api",
+                new List<(string Host, int Port)>
+                {
+                    ("localhost", 1234),
+                    ("localhost", 5672),
+                },
+                "mirero",
+                "system",
+                consoleActor
 
-                QueueDeclation: QueueDeclaration.Create("Test1111")
-                                                 .WithDurable(false)
-                                                 .WithAutoDelete(false)
             ));
 
             Console.ReadLine();

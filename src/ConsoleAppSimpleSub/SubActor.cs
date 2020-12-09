@@ -1,21 +1,15 @@
-using System;
-using System.Text;
+using System.Collections.Generic;
 using Akka.Actor;
 using Akka.Event;
-using Akka.IO;
 using Akka.Streams;
-using Akka.Streams.Amqp.RabbitMq;
-using Akka.Streams.Amqp.RabbitMq.Dsl;
 using Akka.Streams.Dsl;
-using Akka.Util;
-using Newtonsoft.Json;
+using AkkaStreamsAmqpHelper;
+using Messages;
 
 namespace ConsoleAppSimpleSub
 {
     public class SubActor : ReceiveActor, IWithUnboundedStash
     {
-        ILoggingAdapter Logger { get; } = Context.GetLogger();
-
         public SubActor()
         {
             Context.Parent.Tell(new Create());
@@ -23,32 +17,31 @@ namespace ConsoleAppSimpleSub
             ReceiveAny(x => Stash.Stash());
         }
 
+        public IStash Stash { get; set; }
+        private ILoggingAdapter Logger { get; } = Context.GetLogger();
+        public IActorRef ConsoleActor { get; private set; }
+
         private void Handle(Setup m)
         {
             Become(Ready);
             Stash.UnstashAll();
 
-            var sourceRabbitMQ = AmqpSource.CommittableSource(NamedQueueSourceSettings.Create(m.ConnectionSettings, m.QueueName)
-                                                                                     .WithDeclarations(m.QueueDeclation), 1);
+            ConsoleActor = m.ConsoleActor;
 
-            var restartSource = RestartSource.WithBackoff(() => sourceRabbitMQ,
-            TimeSpan.FromSeconds(3),
-            TimeSpan.FromSeconds(30),
-            0.2);
+            var source = SourcesHelper.CommittableQueueWithWithBackoff(option =>
+            {
+                option.HostAndPorts = m.HostAndPorts;
+                option.QueueName = m.QueueName;
+                option.UserName = m.UserName;
+                option.Password = m.Password;
+            });
 
-            var flowObject = Flow.Create<CommittableIncomingMessage>()
-                                 .Select(m => m.Message.Bytes.ToString(Encoding.UTF8))
-                                 .Select(m => JsonConvert.DeserializeObject(m, new JsonSerializerSettings
-                                 {
-                                     TypeNameHandling = TypeNameHandling.All,
-                                 }));
+            var sinkActor = Sink.ActorRef<(object, ICommitable)>(Self, new CopmleteMessage());
 
-            var sinkActor = Sink.ActorRef<object>(Self, new CopmleteMessage());
-
-            var graph = GraphDsl.Create(restartSource, (builder, start) =>
+            var graph = GraphDsl.Create(source, (builder, start) =>
             {
                 var sink = builder.Add(sinkActor);
-                var flow = builder.Add(flowObject);
+                var flow = builder.Add(FlowsHelper.Deserialize());
 
                 builder.From(start)
                        .Via(flow)
@@ -60,14 +53,42 @@ namespace ConsoleAppSimpleSub
             Context.Materializer().Materialize(graph);
         }
 
-        private void Ready()
+        private void Ready() => Receive<(object, ICommitable)>(Handle);
+
+        private void Handle((object Message, ICommitable Commit) m)
         {
-            Receive<object>(m => Console.WriteLine(m.GetType().Name));
+            switch (m.Message)
+            {
+                case Hello hello:
+                {
+                    ConsoleActor.Tell((hello, m.Commit));
+                }
+                break;
+            }
         }
 
-        public IStash Stash { get; set; }
+        public class Setup
+        {
+            public Setup(string queueName,
+                         List<(string Host, int Port)> hostAndPorts,
+                         string userName,
+                         string password,
+                         IActorRef consoleActor)
+            {
+                HostAndPorts = hostAndPorts;
+                QueueName = queueName;
+                UserName = userName;
+                Password = password;
+                ConsoleActor = consoleActor;
+            }
 
-        public record Setup(IAmqpConnectionSettings ConnectionSettings, string QueueName, IDeclaration QueueDeclation);
+            public List<(string Host, int Port)> HostAndPorts { get; internal set; }
+            public string QueueName { get; internal set; }
+            public string UserName { get; internal set; }
+            public string Password { get; internal set; }
+            public IActorRef ConsoleActor { get; }
+        }
+
         public record Create;
         public record CopmleteMessage;
     }

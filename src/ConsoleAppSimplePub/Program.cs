@@ -1,13 +1,15 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Streams.Amqp.RabbitMq;
+using Messages;
 
 namespace ConsoleAppSimplePub
 {
     internal class Program
     {
-        private static void Main(string[] args)
+        private static async Task Main(string[] args)
         {
             var actorSystem = ActorSystem.Create("consoleSample");
 
@@ -15,23 +17,23 @@ namespace ConsoleAppSimplePub
 
             pubActor.Tell(new PubActor.Setup
             (
-                ConnectionSettings : AmqpConnectionDetails.Create("localhost", 5672)
-                                                          .WithCredentials(AmqpCredentials.Create("mirero", "system"))
-                                                          .WithAutomaticRecoveryEnabled(true)
-                                                          .WithNetworkRecoveryInterval(TimeSpan.FromSeconds(1)),
-                QueueName : "Test1111",
-
-                QueueDeclation : QueueDeclaration.Create("Test1111")
-                                                 .WithDurable(false)
-                                                 .WithAutoDelete(false)
+                "Mirero.MLS.Api",
+                new List<(string Host, int Port)>
+                {
+                    ("localhost", 1234),
+                    ("localhost", 5672),
+                },
+                "mirero",
+                "system"
             ));
 
-            pubActor.Tell(new PubActor.PubMessage("Hello"));
-            pubActor.Tell(new PubActor.PubMessage("World"));
-            pubActor.Tell(new PubActor.PubMessage(new List<int> { 1, 2, 3 }));
-            pubActor.Tell(new PubActor.PubMessage(new List<Hello> { new Hello() }));
+            pubActor.Tell(new Hello("Hong"));
+            pubActor.Tell(new Hello("Shim"));
+            pubActor.Tell(new Hello("Joe"));
 
-            Console.ReadLine();
+            await Task.Delay(5000);
+
+            await actorSystem.Terminate();
         }
     }
 }
